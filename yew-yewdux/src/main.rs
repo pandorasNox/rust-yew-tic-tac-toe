@@ -1,30 +1,14 @@
 use std::rc::Rc;
 
-use yew::{function_component, html, Callback};
-use yew::{prelude::*, virtual_dom::VNode};
+use yew::{function_component, html, prelude::*, virtual_dom::VNode, Callback};
+use yewdux::prelude::*;
 
 fn main() {
     println!("Hello, world!");
     yew::start_app::<App>();
 }
 
-struct Game {
-    grid: TTTGrid,
-}
-
-impl Game {
-    fn new() -> Game {
-        Game {
-            grid: [
-                [None, None, None],
-                [None, None, None],
-                [None, None, None],
-            ],
-        }
-    }
-}
-
-#[derive(PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 enum Piece {
     X,
     O,
@@ -32,8 +16,17 @@ enum Piece {
 
 type TTTGrid = [[Option<Piece>; 3]; 3];
 
-struct App {
-    game: Game,
+#[derive(Debug, Default, Clone, PartialEq, Eq, Store)]
+struct State {
+    grid: TTTGrid,
+}
+
+impl State {
+    fn new() -> State {
+        State {
+            grid: [[None, None, None], [None, None, None], [None, None, None]],
+        }
+    }
 }
 
 enum Msg {
@@ -41,75 +34,47 @@ enum Msg {
     GridChange(usize, usize),
 }
 
-impl Component for App {
-    type Message = Msg;
-    type Properties = ();
+impl Reducer<State> for Msg {
+    fn apply(&self, mut state: Rc<State>) -> Rc<State> {
+        let game_state = Rc::make_mut(&mut state);
 
-    fn create(ctx: &Context<Self>) -> Self {
-        Self {
-            game: Game::new(),
-        }
-    }
-
-    fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
-        match msg {
+        match self {
             Msg::Reset => {
-                self.game = Game::new();
-                true
+                return Rc::new(State::new());
             }
             Msg::GridChange(i_row, i_col) => {
-                match self.game.grid[i_row][i_col] {
-                    Some(Piece::X) => {
-                        self.game.grid[i_row][i_col] = Some(Piece::O);
-                    }
-                    Some(Piece::O) => {
-                        self.game.grid[i_row][i_col] = None;
-                    }
-                    None => {
-                        self.game.grid[i_row][i_col] = Some(Piece::X);
-                    }
-                }
-                true
+                game_state.grid[*i_row][*i_col] = Some(Piece::X);
+                return Rc::new(game_state.clone());
             }
-        }
-    }
-
-    fn view(&self, ctx: &Context<Self>) -> Html {
-        // let ctx_x = ctx.clone();
-        let cb = |_| Msg::Reset;
-        let reset = ctx.link().callback(cb);
-
-        html! {
-            <>
-                <h1>{"Tic Tac Toe"}</h1>
-                <Grid grid={self.game.grid} />
-                <div class="flex justify-center">
-                    <button onclick={reset} class="border rounded p-4">{"Reset"}</button>
-                </div>
-            </>
-        }
+        };
     }
 }
 
-#[derive(Properties, PartialEq)]
-struct GridProps
-{
-    grid: TTTGrid,
+#[function_component(App)]
+fn app() -> Html {
+    let (_, dispatch) = use_store::<State>();
+    let reset = dispatch.apply_callback(move |_| Msg::Reset);
+
+    html! {
+        <>
+            <h1>{"Tic Tac Toe"}</h1>
+            <Grid />
+            <div class="flex justify-center">
+                <button onclick={reset} class="border rounded p-4">{"Reset"}</button>
+            </div>
+        </>
+    }
 }
 
 #[function_component(Grid)]
-fn grid(props: &GridProps) -> Html {
-    let mut elems: Vec<VNode> = vec![];
+fn grid() -> Html {
+    let (game, dispatch) = use_store::<State>();
 
-    for i_row in 0..props.grid.len() {
-        let row = props.grid[i_row];
+    let mut elems: Vec<VNode> = vec![];
+    for i_row in 0..game.grid.len() {
+        let row = game.grid[i_row];
         for i_col in 0..row.len() {
-            let onclick: Callback<MouseEvent>= {
-                Callback::from(move |ev: MouseEvent| {
-                    ev.prevent_default();
-                    // article_favorite.run();
-                })
-            };
+            let onclick = dispatch.apply_callback(move |_| Msg::GridChange(i_row, i_col));
 
             let column_cell = row[i_col];
             match column_cell {
