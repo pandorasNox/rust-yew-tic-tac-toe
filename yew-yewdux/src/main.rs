@@ -47,8 +47,22 @@ impl State {
 
     fn has_won(&self) -> (bool, Option<Piece>) {
         let grid = self.grid;
-        let mut x_count = 0;
-        let mut o_count = 0;
+        let mut x_count: u8 = 0;
+        let mut o_count: u8 = 0;
+
+        fn validate(x_count: u8, o_count: u8) -> (bool, Option<Piece>) {
+            match (x_count, o_count) {
+                (3, _) => {
+                    return (true, Some(Piece::X));
+                }
+                (_, 3) => {
+                    return (true, Some(Piece::O));
+                }
+                _ => {
+                    return (false, None);
+                }
+            }
+        }
 
         //check rows
         for i_row in 0..grid.len() {
@@ -61,18 +75,12 @@ impl State {
                 }
             }
 
-            match (x_count, o_count) {
-                (3, _) => {
-                    return (true, Some(Piece::X));
-                }
-                (_, 3) => {
-                    return (true, Some(Piece::O));
-                }
-                _ => {
-                    x_count = 0;
-                    o_count = 0;
-                }
-            }
+            let (has_won, winner) = validate(x_count, o_count);
+            if has_won { return (has_won, winner);}
+
+            //reset counters
+            x_count = 0;
+            o_count = 0;
         }
 
         //check columns
@@ -86,18 +94,12 @@ impl State {
                 }
             }
 
-            match (x_count, o_count) {
-                (3, _) => {
-                    return (true, Some(Piece::X));
-                }
-                (_, 3) => {
-                    return (true, Some(Piece::O));
-                }
-                _ => {
-                    x_count = 0;
-                    o_count = 0;
-                }
-            }
+            let (has_won, winner) = validate(x_count, o_count);
+            if has_won { return (has_won, winner);}
+
+            //reset counters
+            x_count = 0;
+            o_count = 0;
         }
 
         //check diagonals top_left_to_bottom_right
@@ -110,18 +112,12 @@ impl State {
             }
         }
 
-        match (x_count, o_count) {
-            (3, _) => {
-                return (true, Some(Piece::X));
-            }
-            (_, 3) => {
-                return (true, Some(Piece::O));
-            }
-            _ => {
-                x_count = 0;
-                o_count = 0;
-            }
-        }
+        let (has_won, winner) = validate(x_count, o_count);
+        if has_won { return (has_won, winner);}
+
+        //reset counters
+        x_count = 0;
+        o_count = 0;
 
         //check diagonals top_right_to_bottom_left
         for i_row in 0..grid.len() {
@@ -134,18 +130,12 @@ impl State {
             }
         }
 
-        match (x_count, o_count) {
-            (3, _) => {
-                return (true, Some(Piece::X));
-            }
-            (_, 3) => {
-                return (true, Some(Piece::O));
-            }
-            _ => {
-                x_count = 0;
-                o_count = 0;
-            }
-        }
+        let (has_won, winner) = validate(x_count, o_count);
+        if has_won { return (has_won, winner);}
+
+        //reset counters
+        x_count = 0;
+        o_count = 0;
 
         return (false, None);
     }
