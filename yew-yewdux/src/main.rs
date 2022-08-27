@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use yew::{function_component, html, prelude::*, virtual_dom::VNode, Callback};
+use yew::{function_component, html, prelude::*, virtual_dom::VNode};
 use yewdux::prelude::*;
 
 fn main() {
@@ -8,8 +8,9 @@ fn main() {
     yew::start_app::<App>();
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, Default, PartialEq, Eq, Clone, Copy)]
 enum Piece {
+    #[default]
     X,
     O,
 }
@@ -19,19 +20,28 @@ type TTTGrid = [[Option<Piece>; 3]; 3];
 #[derive(Debug, Default, Clone, PartialEq, Eq, Store)]
 struct State {
     grid: TTTGrid,
+    current_player: Piece,
 }
 
 impl State {
     fn new() -> State {
         State {
             grid: [[None, None, None], [None, None, None], [None, None, None]],
+            ..Default::default()
+        }
+    }
+
+    fn next(&mut self) {
+        match self.current_player {
+            Piece::X => self.current_player = Piece::O,
+            Piece::O => self.current_player = Piece::X,
         }
     }
 }
 
 enum Msg {
     Reset,
-    GridChange(usize, usize),
+    PiecePlacement(usize, usize),
 }
 
 impl Reducer<State> for Msg {
@@ -42,9 +52,17 @@ impl Reducer<State> for Msg {
             Msg::Reset => {
                 return Rc::new(State::new());
             }
-            Msg::GridChange(i_row, i_col) => {
-                game_state.grid[*i_row][*i_col] = Some(Piece::X);
-                return Rc::new(game_state.clone());
+            Msg::PiecePlacement(i_row, i_col) => {
+                match game_state.grid[*i_row][*i_col] {
+                    None => {
+                        game_state.grid[*i_row][*i_col] = Some(game_state.current_player);
+                        game_state.next();
+                        return Rc::new(game_state.clone());
+                    }
+                    _ => {}
+                }
+
+                return state;
             }
         };
     }
@@ -74,7 +92,7 @@ fn grid() -> Html {
     for i_row in 0..game.grid.len() {
         let row = game.grid[i_row];
         for i_col in 0..row.len() {
-            let onclick = dispatch.apply_callback(move |_| Msg::GridChange(i_row, i_col));
+            let onclick = dispatch.apply_callback(move |_| Msg::PiecePlacement(i_row, i_col));
 
             let column_cell = row[i_col];
             match column_cell {
