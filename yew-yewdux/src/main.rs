@@ -139,6 +139,26 @@ impl State {
 
         return (false, None);
     }
+
+    fn is_draw(&self) -> bool {
+        let (has_won, _) = self.has_won();
+
+        let mut no_nones = true;
+        for i_row in 0..self.grid.len() {
+            let row = self.grid[i_row];
+            if row.contains(&None) {
+                no_nones = false;
+                break;
+            }
+        }
+
+        if  no_nones && !has_won {
+            return true;
+        }
+
+        false
+    }
+
 }
 
 enum Msg {
@@ -180,6 +200,7 @@ fn app() -> Html {
     let (state, dispatch) = use_store::<State>();
     let reset = dispatch.apply_callback(move |_| Msg::Reset);
     let (has_won, winning_piece) = state.has_won();
+    let is_draw = state.is_draw();
     let winner = match winning_piece {
         Some(piece) => piece.to_string(),
         _ => "".to_string(),
@@ -191,10 +212,15 @@ fn app() -> Html {
             <div class="flex justify-center">
                 <div>
                     <h2>
-                        {"Winner is: "}
+                        if is_draw {
+                            {"It's a draw..."}
+                        }
+
                         if has_won {
-                            {winner}
-                        } else {
+                            {"Winner is: "}{winner}
+                        }
+
+                        if !is_draw && !has_won {
                             {"..."}
                         }
                     </h2>
