@@ -229,7 +229,7 @@ fn app() -> Html {
                 </div>
             </div>
             <div class="flex justify-center">
-                <button onclick={reset} class="border rounded p-4">{"Reset"}</button>
+                <button onclick={reset} type="button" class="py-[.688rem] px-4 inline-flex justify-center items-center gap-2 rounded-md border-2 border-gray-200 font-semibold text-white-500 hover:text-black hover:bg-white hover:border-white-500 focus:outline-none focus:ring-2 focus:ring-white-500 focus:ring-offset-2 transition-all text-sm dark:border-gray-700 dark:hover:border-white-500">{"Reset"}</button>
             </div>
         </>
     }
