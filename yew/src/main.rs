@@ -79,42 +79,50 @@ impl Component for App {
         let cb = |_| Msg::Reset;
         let reset = ctx.link().callback(cb);
 
-        let grid_change_helper = |ir, ic| {
-            ctx.link().callback(move |_: MouseEvent| Msg::GridChange(ir, ic))
-        };
         // let grid_change_helper = |ir, ic| {
-        //     Rc::new(
-        //         ctx.link().callback(move |_: MouseEvent| Msg::GridChange(ir, ic))
-        //     )
+        //     ctx.link().callback(move |_: MouseEvent| Msg::GridChange(ir, ic))
         // };
+
+        let grid_change_helper: OnclickHelper = OnclickHelper(Rc::new(|ir, ic| {
+            ctx.link().callback(move |_: MouseEvent| Msg::GridChange(ir, ic))
+        }));
 
         html! {
             <>
                 <h1>{"Tic Tac Toe"}</h1>
-                <Grid<_> grid={self.game.grid} onclick_helper={grid_change_helper} />
+                <Grid grid={self.game.grid} onclick_helper={grid_change_helper} />
                 <div class="flex justify-center">
                     <button onclick={reset} class="border rounded p-4">{"Reset"}</button>
                 </div>
             </>
         }
     }
+
 }
 
+pub struct OnclickHelper(Rc<dyn Fn(usize, usize) -> Callback<MouseEvent>>);
+impl PartialEq for OnclickHelper {
+    fn eq(&self, other: &Self) -> bool {
+        Rc::ptr_eq(&self.0, &other.0)
+    }
+}
 #[derive(Properties, PartialEq)]
-struct GridProps<F>
-where
-    F: Fn (usize, usize) -> Callback<MouseEvent> + std::cmp::PartialEq,
+struct GridProps
+// struct GridProps<F>
+// where
+//     F: Fn (usize, usize) -> Callback<MouseEvent> + std::cmp::PartialEq,
 {
     grid: TTTGrid,
-    onclick_helper: F,
+    // onclick_helper: F,
     // onclick_helper: fn(usize, usize) -> Callback<MouseEvent>,
-    // onclick_helper: Rc<dyn Fn(usize, usize) -> Callback<MouseEvent>>,
+    onclick_helper: OnclickHelper,
 }
 
 #[function_component(Grid)]
-fn grid<F>(props: &GridProps<F>) -> Html
-where
-    F: Fn (usize, usize) -> Callback<MouseEvent> + std::cmp::PartialEq,
+// fn grid<F>(props: &GridProps<F>) -> Html
+// where
+//     F: Fn (usize, usize) -> Callback<MouseEvent> + std::cmp::PartialEq,
+fn grid(props: &GridProps) -> Html
 {
     let mut elems: Vec<VNode> = vec![];
 
